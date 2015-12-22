@@ -147,6 +147,53 @@ it should "correctly count the words of a famous quote by Shakespeare" in {
 ```
 
 ---
+### Basic Spark SQL and Testing Exercise: Batch Employee Table Processing
+
+Now we'll add HiveQL to our batch processing.
+
+#### Add the Hive package to pom.xml with the following.
+
+		<dependency>
+				<groupId>org.apache.spark</groupId>
+				<artifactId>spark-hive_2.10</artifactId>
+				<version>1.5.2</version>
+		</dependency>
+
+#### Create the file src/test/scala/[name]/SparkSQLExampleSpec.scala
+
+``` scala
+package dei // package [name]
+
+import org.apache.spark.sql.hive.HiveContext
+import org.scalatest._
+
+trait SparkSqlSpec extends SparkSpec {
+  this: Suite =>
+
+  private var _sqlc: HiveContext = _
+
+  def sqlc = _sqlc
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+
+    _sqlc = new HiveContext(sc)
+  }
+
+  override def afterAll(): Unit = {
+    _sqlc = null
+
+    super.afterAll()
+  }
+
+}
+```
+
+This creates a new trait `SparkSqlSpec` that defines a Fixture, the `HiveContext`, named `sqlc`.
+
+---
+### Basic Spark Streaming Exercise
+---
 ### Next Steps:
 
 If you want to use a different IDE than IntelliJ, here's a [guide](http://www.scalatest.org/user_guide/running_your_tests) to that (e.g. command line, maven, scala interpreter, etc.)
