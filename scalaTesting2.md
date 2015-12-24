@@ -189,7 +189,87 @@ trait SparkSqlSpec extends SparkSpec {
 }
 ```
 
-This creates a new trait `SparkSqlSpec` that defines a Fixture, the `HiveContext`, named `sqlc`.
+This creates a new trait `SparkSqlSpec` that defines a Fixture, the `HiveContext`, named `sqlc`. Note that it extends `SparkSpec`, so in particular you will create the `SparkContext` before creating `HiveContext`, and destroy in reverse order.
+
+We'll work with two case classes `Employee` and `Department`. We will create two Hive tables with sample employee and department data. We will create a "Data Access Object" over the Spark SQL tables, that is, an object that accesses the data we want while preventing us from issuing SQL queries directly. Regardless of your opinions on DAOs, this is a good exercise.
+
+Create the `SparkSqlExampleSpec` with the following in the same file:
+
+```scala
+class SparkSqlExampleSpec extends FlatSpec 
+with SparkSqlSpec with GivenWhenThen with Matchers {
+
+  private var employeeDao: EmployeeDao = _
+
+  private val employeesTuples = List(
+    ("123234877", "Michael", "Rogers", 14),
+    ("152934485", "Anand", "Manikutty", 14),
+    ("222364883", "Carol", "Smith", 37),
+    ("326587417", "Joe", "Stevens", 37),
+    ("332154719", "Mary-Anne", "Foster", 14),
+    ("332569843", "George", "ODonnell", 77),
+    ("546523478", "John", "Doe", 59),
+    ("631231482", "David", "Smith", 77),
+    ("654873219", "Zacary", "Efron", 59),
+    ("745685214", "Eric", "Goldsmith", 59),
+    ("845657245", "Elizabeth", "Doe", 14),
+    ("845657246", "Kumar", "Swamy", 14)
+  )
+
+  private val employees = employeesTuples.
+    map(row => row match {
+    case (ssn:String, first:String, last:String, department:Int)
+      => Employee(ssn, first, last, department)}
+    )
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+
+    val employeesRDD = sc.parallelize(employees)
+    employeeDao = new EmployeeDao(sqlc, employeesRDD)
+  }
+
+  behavior of "The last name of all employees"
+  it should "be selected" in {
+    val lastNames = employeeDao.lastNames().collect().sorted
+
+    lastNames should have size 12
+    lastNames should equal (Array(
+      "Rogers", "Manikutty", "Smith", "Stevens", "Foster", "ODonnell",
+      "Doe", "Smith", "Efron", "Goldsmith", "Doe", "Swamy").sorted)
+  }
+}
+```
+
+Here, we take raw tuple data, fit it into the `Employee` case class. Then we create an `EmployeeDao` object, which takes as parameters the `HiveContext` and the list of `Employees`.
+
+##### Exercise: Create the file src/main/scala/[name]/DepartmentAndEmployee.scala, put the following in, change ???, and pass the test:
+
+```
+package dei // package [name]
+
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.hive.HiveContext
+
+case class Employee(
+                     ssn: String,
+                     first: String,
+                     last: String,
+                     department: Int)
+
+case class EmployeeDao(sqlc: HiveContext, employees: List[Employee]) {
+  private val _sqlc = sqlc
+  private val sc = sqlc.sparkContext
+
+  import _sqlc.implicits._
+
+  private val edf = employees.toDF().registerTempTable("employees")
+
+  def lastNames(): RDD[String] = ???
+}
+```
+
+##### Exercise: Define your own tests and pass the tests with your own access methods. 
 
 ---
 ### Basic Spark Streaming Exercise
