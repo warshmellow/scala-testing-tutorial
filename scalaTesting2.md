@@ -245,7 +245,7 @@ Here, we take raw tuple data, fit it into the `Employee` case class. Then we cre
 
 ##### Exercise: Create the file src/main/scala/[name]/DepartmentAndEmployee.scala, put the following in, change ???, and pass the test:
 
-```
+``` scala
 package dei // package [name]
 
 import org.apache.spark.sql.Row
