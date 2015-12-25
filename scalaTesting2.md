@@ -334,7 +334,7 @@ class SparkSqlExampleSpec extends FlatSpec with SparkSqlSpec with GivenWhenThen 
 
   behavior of "All employees including each employee's department's data"
   it should "be selected" in {
-    val employeesWithDepartment = employeeDao.withDepartment().
+    val employeesWithDepartment = employeeWithDepartmentDao.withDepartment().
       map ( r => r match {
         case Row(a,b,c,d,e) => (a,b,c,d,e)
       }).
@@ -380,24 +380,31 @@ case class EmployeeDao(
                         sqlc: HiveContext,
                         employees: RDD[Employee],
                         departments: Option[RDD[Department]] = None) {
+                        
 
+  // Use HiveContext to register a temp table 
+  // for employees and departments
+  // We add a salt to table names to prevent name clashes
   private val _sqlc = sqlc
-  private val sc = sqlc.sparkContext
 
   import _sqlc.implicits._
 
-  employees.toDF().registerTempTable("employees")
+  private val employeeTableName =
+    "employees" + Math.abs(Random.nextInt()).toString
+  private val departmentTableName =
+    "departments" + Math.abs(Random.nextInt()).toString
+
+  employees.toDF().registerTempTable(employeeTableName)
 
   departments match {
-    case Some(rdd) => rdd.toDF().registerTempTable("departments")
+    case Some(rdd) => rdd.toDF().registerTempTable(departmentTableName)
     case None => Unit
   }
 
   def lastNames(): RDD[String] = ???
-
   def withDepartment() = ???
-  }
-```
+}
+  ```
 
 ---
 ### Next Steps:

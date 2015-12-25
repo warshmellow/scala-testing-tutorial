@@ -84,7 +84,7 @@ class SparkSqlExampleSpec extends FlatSpec with SparkSqlSpec with GivenWhenThen 
 
   behavior of "All employees including each employee's department's data"
   it should "be selected" in {
-    val employeesWithDepartment = employeeDao.withDepartment().
+    val employeesWithDepartment = employeeWithDepartmentDao.withDepartment().
       map ( r => r match {
         case Row(a,b,c,d,e) => (a,b,c,d,e)
       }).
